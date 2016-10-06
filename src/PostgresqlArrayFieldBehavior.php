@@ -36,131 +36,130 @@ use yii\db\ActiveRecord;
 
 class PostgresqlArrayFieldBehavior extends Behavior
 {
-	/**
-	 * @var string Field name supposed to contain array data
-	 */
-	protected $arrayFieldName;
+    /**
+     * @var string Field name supposed to contain array data
+     */
+    protected $arrayFieldName;
 
-	/**
-	 * @var boolean if array is empty, saving null value
-	 */
-	public $onEmptySaveNull = true;
+    /**
+     * @var boolean if array is empty, saving null value
+     */
+    public $onEmptySaveNull = true;
 
-	/**
-	 * @inheritdoc
-	 */
-	public function events()
-	{
-		return [
-			ActiveRecord::EVENT_INIT => '_loadArray',
-			ActiveRecord::EVENT_AFTER_FIND => '_loadArray',
-			ActiveRecord::EVENT_AFTER_INSERT => '_loadArray',
-			ActiveRecord::EVENT_AFTER_UPDATE => '_loadArray',
+    /**
+     * @inheritdoc
+     */
+    public function events()
+    {
+        return [
+            ActiveRecord::EVENT_INIT => 'loadArray',
+            ActiveRecord::EVENT_AFTER_FIND => 'loadArray',
+            ActiveRecord::EVENT_AFTER_INSERT => 'loadArray',
+            ActiveRecord::EVENT_AFTER_UPDATE => 'loadArray',
 
-			ActiveRecord::EVENT_BEFORE_INSERT => '_saveArray',
-			ActiveRecord::EVENT_BEFORE_UPDATE => '_saveArray'
-		];
-	}
+            ActiveRecord::EVENT_BEFORE_INSERT => 'saveArray',
+            ActiveRecord::EVENT_BEFORE_UPDATE => 'saveArray'
+        ];
+    }
 
-	/**
-	 * Returns array field name
-	 *
-	 * @return string
-	 * @throws \Exception
-	 */
-	public function getArrayFieldName()
-	{
-		if (!$this->arrayFieldName) {
-			throw new \Exception('Array field name doesn\'t exist');
-		}
+    /**
+     * Returns array field name
+     *
+     * @return string
+     * @throws \Exception
+     */
+    public function getArrayFieldName()
+    {
+        if (!$this->arrayFieldName) {
+            throw new \Exception('Array field name doesn\'t exist');
+        }
 
-		return $this->arrayFieldName;
-	}
+        return $this->arrayFieldName;
+    }
 
-	/**
-	 * Sets array field name
-	 *
-	 * @param $arrayFieldName
-	 * @return $this
-	 */
-	public function setArrayFieldName($arrayFieldName)
-	{
-		$this->arrayFieldName = $arrayFieldName;
+    /**
+     * Sets array field name
+     *
+     * @param $arrayFieldName
+     * @return $this
+     */
+    public function setArrayFieldName($arrayFieldName)
+    {
+        $this->arrayFieldName = $arrayFieldName;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * Returns model
-	 *
-	 * @return ActiveRecord
-	 * @throws \Exception
-	 */
-	protected function getModel()
-	{
-		if (!$model = $this->owner) {
-			throw new \Exception('Model is not been initialized properly.');
-		}
-		if (!$model instanceof ActiveRecord) {
-			throw new \Exception(sprintf('Behavior must be applied to the ActiveRecord model class and it\'s iheritants, the unsupported class provided: `%s`', get_class($model)));
-		}
+    /**
+     * Returns model
+     *
+     * @return ActiveRecord
+     * @throws \Exception
+     */
+    protected function getModel()
+    {
+        if (!$model = $this->owner) {
+            throw new \Exception('Model is not been initialized properly.');
+        }
+        if (!$model instanceof ActiveRecord) {
+            throw new \Exception(sprintf('Behavior must be applied to the ActiveRecord model class and it\'s iheritants, the unsupported class provided: `%s`', get_class($model)));
+        }
 
-		return $model;
-	}
+        return $model;
+    }
 
-	/**
-	 * Loads raw data from model
-	 *
-	 * @return string Postgresql-coded array representation
-	 * @throws \Exception
-	 */
-	protected function getRawData()
-	{
-		return $this->getModel()->getAttribute($this->getArrayFieldName());
-	}
+    /**
+     * Loads raw data from model
+     *
+     * @return string Postgresql-coded array representation
+     * @throws \Exception
+     */
+    protected function getRawData()
+    {
+        return $this->getModel()->getAttribute($this->getArrayFieldName());
+    }
 
-	/**
-	 * Sets raw data to the model
-	 * @param $data
-	 * @return $this
-	 * @throws \Exception
-	 */
-	protected function setRawData($data)
-	{
-		$this->getModel()->setAttribute($this->getArrayFieldName(), $data);
+    /**
+     * Sets raw data to the model
+     * @param $data
+     * @return $this
+     * @throws \Exception
+     */
+    protected function setRawData($data)
+    {
+        $this->getModel()->setAttribute($this->getArrayFieldName(), $data);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * Loads array field
-	 * @return $this
-	 */
-	public function _loadArray()
-	{
-		$rawData = $this->getRawData();
-		$value = json_decode($rawData);
-		$value = $value ?: [];
-		$this->getModel()->setAttribute($this->getArrayFieldName(), $value);
+    /**
+     * Loads array field
+     * @return $this
+     */
+    public function loadArray()
+    {
+        $rawData = $this->getRawData();
+        $value = json_decode($rawData);
+        $value = $value ?: [];
+        $this->getModel()->setAttribute($this->getArrayFieldName(), $value);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * Sets array field data into format suitable for save
-	 *
-	 * @return $this
-	 */
-	public function _saveArray()
-	{
-		$value = $this->getModel()->getAttribute($this->getArrayFieldName());;
-		$value = json_encode($value);
-		if($value === null && $this->onEmptySaveNull == false){
-			$value = '{}';
-		}
-		$this->getModel()->setAttribute($this->getArrayFieldName(), $value);
+    /**
+     * Sets array field data into format suitable for save
+     *
+     * @return $this
+     */
+    public function saveArray()
+    {
+        $value = $this->getModel()->getAttribute($this->getArrayFieldName());
+        $value = json_encode($value);
+        if ($value === null && $this->onEmptySaveNull == false) {
+            $value = '{}';
+        }
+        $this->getModel()->setAttribute($this->getArrayFieldName(), $value);
 
-		return $this;
-	}
-
+        return $this;
+    }
 }
