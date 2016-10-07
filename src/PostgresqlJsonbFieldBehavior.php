@@ -6,7 +6,7 @@
  *
  * ```php
  * use yii\db\ActiveRecord;
- * use \fgh151\PostgresqlArrayField\PostgresqlArrayFieldBehavior;
+ * use \fgh151\PostgresqlJsonb\PostgresqlJsonbFieldBehavior;
  *
  * /**
  *  * @property array $modelField; // this field has array format
@@ -16,7 +16,7 @@
  * ...
  *     public function behaviors() {
  *         return [
- *             'class' => PostgresqlArrayAccessFieldBehavior::className(),
+ *             'class' => PostgresqlJsonbFieldBehavior::className(),
  *             'arrayFieldName' => 'modelField'
  *         ];
  *     }
@@ -29,17 +29,19 @@
  * @author Fedor B Gorsky <fedor@support-pc.org>
  */
 
-namespace fgh151\PostgresqlArrayField;
+namespace fgh151\PostgresqlJsonb;
 
+use fgh151\PostgresqlJsonb\models\DynamicModel;
 use yii\base\Behavior;
 use yii\db\ActiveRecord;
 
-class PostgresqlArrayFieldBehavior extends Behavior
+class PostgresqlJsonbFieldBehavior extends Behavior
 {
+
     /**
      * @var string Field name supposed to contain array data
      */
-    protected $arrayFieldName;
+    public $arrayFieldName;
 
     /**
      * @var boolean if array is empty, saving null value
@@ -52,13 +54,15 @@ class PostgresqlArrayFieldBehavior extends Behavior
     public function events()
     {
         return [
-            ActiveRecord::EVENT_INIT => 'loadArray',
-            ActiveRecord::EVENT_AFTER_FIND => 'loadArray',
-            ActiveRecord::EVENT_AFTER_INSERT => 'loadArray',
-            ActiveRecord::EVENT_AFTER_UPDATE => 'loadArray',
+            ActiveRecord::EVENT_INIT => 'loadObject',
+            ActiveRecord::EVENT_AFTER_FIND => 'loadObject',
+            ActiveRecord::EVENT_AFTER_INSERT => 'loadObject',
+            ActiveRecord::EVENT_AFTER_UPDATE => 'loadObject',
 
-            ActiveRecord::EVENT_BEFORE_INSERT => 'saveArray',
-            ActiveRecord::EVENT_BEFORE_UPDATE => 'saveArray'
+            ActiveRecord::EVENT_BEFORE_INSERT => 'saveObject',
+            ActiveRecord::EVENT_BEFORE_UPDATE => 'saveObject',
+
+            ActiveRecord::EVENT_BEFORE_VALIDATE => 'saveObject'
         ];
     }
 
@@ -136,11 +140,15 @@ class PostgresqlArrayFieldBehavior extends Behavior
      * Loads array field
      * @return $this
      */
-    public function loadArray()
+    public function loadObject()
     {
+
         $rawData = $this->getRawData();
-        $value = json_decode($rawData);
-        $value = $value ?: [];
+
+        $value = PostgresqlJsonbFieldBehavior::postgresqlJsonDecode($rawData);
+
+        $value = $value ?: new DynamicModel();
+
         $this->getModel()->setAttribute($this->getArrayFieldName(), $value);
 
         return $this;
@@ -151,15 +159,38 @@ class PostgresqlArrayFieldBehavior extends Behavior
      *
      * @return $this
      */
-    public function saveArray()
+    public function saveObject()
     {
-        $value = $this->getModel()->getAttribute($this->getArrayFieldName());
-        $value = json_encode($value);
+        $ovalue = $this->getModel()->getAttribute($this->getArrayFieldName());
+        $value = PostgresqlJsonbFieldBehavior::postgresqlJsonEncode($ovalue);
         if ($value === null && $this->onEmptySaveNull == false) {
             $value = '{}';
         }
         $this->getModel()->setAttribute($this->getArrayFieldName(), $value);
 
         return $this;
+    }
+
+
+    /**
+     * @param $data
+     * @return DynamicModel
+     */
+    public static function postgresqlJsonDecode($data)
+    {
+        $array = json_decode(stripcslashes(substr(substr($data, 0, -1), 1)));
+
+
+        return new DynamicModel((array) $array);
+
+    }
+
+    /**
+     * @param $value
+     * @return string
+     */
+    public static function postgresqlJsonEncode($value)
+    {
+        return json_encode($value);
     }
 }

@@ -1,9 +1,9 @@
 # yii2-postgresql-array-field
-Yii2 postgresql array field support behavior
+Yii2 postgresql object field support behavior
 
 ================
 
-Provides PostgreSQL array fields support for yii2 models.
+Provides PostgreSQL object fields support for yii2 models.
 
 Installation
 ------------
@@ -12,9 +12,18 @@ Add a dependency to your project's composer.json:
 ```json
 {
 	"require": {
-		"fgh151/yii2-postgresql-array-field": "^0.2"
+		"fgh151/yii2-postgresql-array-field": "*"
 	}
 }
+```
+
+Migration example
+------------------
+
+```php
+$this->createTable('UserReward', [
+    'jsonField' => fgh151\PostgresqlJsonb\db\Schema::TYPE_JSONB
+]);
 ```
 
 Usage example
@@ -23,7 +32,7 @@ Usage example
 
 ```php
 use yii\db\ActiveRecord;
-use \fgh151\PostgresqlArrayField\PostgresqlArrayFieldBehavior;
+use \fgh151\PostgresqlJsonb\PostgresqlJsonbFieldBehavior;
 
 /**
  * @property array $modelField
@@ -32,10 +41,16 @@ class Model extends ActiveRecord{
 	public function behaviors() {
 		return [
 			[
-				'class' => PostgresqlArrayFieldBehavior::className(),
+				'class' => PostgresqlJsonbFieldBehavior::className(),
 				'arrayFieldName' => 'modelField', // model's field to attach behavior
 				'onEmptySaveNull' => true // if set to false, empty array will be saved as empty PostreSQL array '{}' (default: true)
 			]
 		];
 	}
 }
+```
+
+```php
+$model->jsonField->property = 'value';
+$model->jsonField->otherProperty->otherPropertyValue = 'another value';
+```

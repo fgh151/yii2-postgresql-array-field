@@ -1,6 +1,6 @@
 {
-    "name": "fgh151/yii2-postgresql-array-field",
-    "description": "Yii2 postgresql array field support behavior",
+    "name": "fgh151/yii2-postgresql-jsonb-field",
+    "description": "Yii2 postgresql jsonb field support behavior",
     "license": "MIT",
     "require": {
         "php": ">=5.4.0",
@@ -15,7 +15,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "fgh151\\PostgresqlArrayField\\": "src/"
+            "fgh151\\PostgresqlJsonb\\": "src/"
         }
     }
 }
